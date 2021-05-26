@@ -103,6 +103,19 @@ function normalmix(y_n::Vector, z::Categorical, qm_::Array{F1}, qw_::Array{F2}) 
     return entropy
 end
 
+# Useful in DeepGMM
+function normalmix(y_n::MvNormal, z::Categorical, qm_::Array{F1}, qw_::Array{F2}) where F1<:MvNormal where F2<:Wishart
+    K = length(z.p)
+    d = length(mean(qm_[1]))
+    entropy = 0
+    for k=1:K
+        entropy -= z.p[k] * (-0.5*d*log(2pi) + 0.5*logdetmean(qw_[k])
+                    -0.5*(tr(mean(qw_[k])*squaremean(y_n)) - mean(y_n)'*mean(qw_[k])*mean(qm_[k]) - mean(qm_[k])'*mean(qw_[k])*mean(y_n)
+                    + tr(mean(qw_[k])*squaremean(qm_[k]))))
+    end
+    return entropy
+end
+
 # -∫q(W)q(x_{t},x_{t-1})*logp(x_{t}|x_{t-1},W) dW dx_{t} dx_{t-1}
 function transit(q1::MvNormal, q2::MvNormal, q21::MvNormal, A::Matrix, qW::Wishart)
     k = length(mean(q1))

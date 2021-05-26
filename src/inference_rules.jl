@@ -14,6 +14,15 @@ function collide(p::F...) where F<:Distribution
     return exp_family(F,η)
 end
 
+# For some reason Julia differentiates FullNormal and DiagNormal(diagonal covariance matrix)
+# which restrain the generality of the above collider!
+function collide(p::MvNormal, q::MvNormal)
+    h_p, T_p, η_p, A_eval_p, A_p = exp_family(p)
+    h_q, T_q, η_q, A_eval_q, A_q = exp_family(q)
+    η = η_p + η_q
+    return exp_family(MvNormal,η)
+end
+
 function collide(p::F, q::C; canonical=false) where F<:Distribution where C<:Canonical
     if F <: q.dist
         h_p, T_p, η_p, A_eval_p, A_p = exp_family(p)
@@ -235,6 +244,12 @@ function normalmix(y_n::Number, z::Categorical, qm_::Array{Normal{Float64}}, qw_
     return exp_family.(Gamma,[[0.5*z.p[k],z.p[k]*(mean(qm_[k])*y_n - y_n^2/2 - squaremean(qm_[k])/2)] for k=1:K])
 end
 
+function normalmix(y_n::Nothing, z::Categorical, qm_::Array{Normal{Float64}}, qw_::Array{Gamma{Float64}})
+    m = sum(z.p .* mean.(qm_))/sum(z.p)
+    v = 1/sum(z.p .* mean.(qw_))
+    return Normal(m,sqrt(v))
+end
+
 # Vector observation. Message for categorical choice variable. Mean-precision parameterization
 
 function normalmix(y_n::Vector, z::Nothing, qm_::Array{F1}, qw_::Array{F2}) where F1<:MvNormal where F2<:Wishart
@@ -263,4 +278,39 @@ end
 function normalmix(y_n::Vector, z::Categorical, qm_::Array{F}, qw_::Nothing) where F<:MvNormal
     K = length(z.p)
     return Canonical.(Wishart,[[vec(0.5*z.p[k]*(mean(qm_[k])*y_n' + y_n*mean(qm_[k])' - y_n*y_n' - squaremean(qm_[k]))); 0.5*z.p[k]] for k=1:K])
+end
+
+# Below normalmix rules are useful for Deep GMM
+function normalmix(y_n::Nothing, z::Categorical, qm_::Array{F1}, qw_::Array{F2}) where F1<:MvNormal where F2<:Wishart
+    m = sum(z.p .* mean.(qm_))./sum(z.p)
+    V = Matrix(Hermitian(inv(sum(z.p .* mean.(qw_)))))
+    return MvNormal(m,V)
+end
+
+function normalmix(y_n::MvNormal, z::Nothing, qm_::Array{F1}, qw_::Array{F2}) where F1<:MvNormal where F2<:Wishart
+    d = length(mean(qm_[1]))
+    K = length(qm_)
+    p_vec = zeros(K)
+    for k=1:K
+        p_vec[k] = exp(-0.5*d*log(2pi) + 0.5*logdetmean(qw_[k])
+                    -0.5*(tr(mean(qw_[k])*squaremean(y_n)) -tr(mean(qw_[k])*mean(qm_[k])*mean(y_n)')
+                    -tr(mean(qw_[k])*mean(y_n)*mean(qm_[k])') +tr(mean(qw_[k])*squaremean(qm_[k]))))
+    end
+    return Categorical(p_vec, check_args=false)
+end
+
+function normalmix(y_n::MvNormal, z::Categorical, qm_::Nothing, qw_::Array{F}) where F<:Wishart
+    K = length(z.p)
+    #message = Array{MvNormal}(undef, K)
+    message = Array{Canonical}(undef, K)
+    for k=1:K
+        #message[k] = MvNormal(y_n,inv(z.p[k]*mean(qw_[k])))
+        message[k] = Canonical(MvNormal,[z.p[k]*mean(qw_[k])*mean(y_n);vec(-0.5*z.p[k]*mean(qw_[k]))])
+    end
+    return message
+end
+
+function normalmix(y_n::MvNormal, z::Categorical, qm_::Array{F}, qw_::Nothing) where F<:MvNormal
+    K = length(z.p)
+    return Canonical.(Wishart,[[vec(0.5*z.p[k]*(mean(qm_[k])*mean(y_n)' + mean(y_n)*mean(qm_[k])' - squaremean(y_n) - squaremean(qm_[k]))); 0.5*z.p[k]] for k=1:K])
 end
