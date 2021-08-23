@@ -57,7 +57,17 @@ function exp_family(p::MvNormal)
     return h_func, T_func, η, A_eval, A_func
 end
 
-function exp_family(t::Type{F}, η::Vector) where F<:MvNormal
+# function exp_family(t::Type{F}, η::Vector) where F<:MvNormal
+#     n = length(η)
+#     Δ = 1 + 4*n
+#     k = Int((-1 + sqrt(Δ))/2)
+#     W = Matrix(Hermitian(-2*reshape(η[k+1:end],(k,k))))
+#     V = Matrix(Hermitian(inv(W)))
+#     m = W\η[1:k]
+#     MvNormal(m,V)
+# end
+
+function exp_family(t::Type{F}, η) where F<:MvNormal
     n = length(η)
     Δ = 1 + 4*n
     k = Int((-1 + sqrt(Δ))/2)
