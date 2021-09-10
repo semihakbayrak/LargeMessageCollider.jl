@@ -172,6 +172,7 @@ function mvnormal(x::Nothing, μ::Distribution, τ::Distribution)
 end
 categorical(x::Nothing, p::Dirichlet) = exp_family(Categorical, logmean(p))
 categorical(x::Categorical, p::Nothing) = Dirichlet(x.p .+ 1)
+gamma(x::Real, α::Distribution, θ::Nothing) = InverseGamma(mean(α)-1,x,check_args=false)
 
 #-------------------
 # State transition nodes to calculate joint distributions

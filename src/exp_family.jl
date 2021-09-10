@@ -100,6 +100,28 @@ function exp_family(t::Type{F}, η::Vector, check_args=true) where F<:Gamma
 end
 
 #--------------------------
+# InverseGamma distribution
+#--------------------------
+function exp_family(p::InverseGamma)
+    h(x::Number) = 1
+    T(x::Number) = [log(x),1/x]
+    η = [shape(p)-1, -scale(p)]
+    A_eval = loggamma(shape(p)) - shape(p)*log(scale(p))
+    A(η::Array) = loggamma(-η[1]-1) - (-η[1]-1)*log(-η[2])
+
+    h_func = (x)->h(x)
+    T_func = (x)->T(x)
+    A_func = (η)->A(η)
+
+    return h_func, T_func, η, A_eval, A_func
+end
+
+function exp_family(t::Type{F}, η::Vector, check_args=true) where F<:InverseGamma
+    α, θ = η[1] + 1, -η[2]
+    InverseGamma(α,θ,check_args=check_args)
+end
+
+#--------------------------
 # Poisson distribution
 #--------------------------
 function exp_family(p::Poisson)
