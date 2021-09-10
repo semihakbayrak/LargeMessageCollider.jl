@@ -56,3 +56,24 @@ function logdetmean(p::Wishart)
     ρ = size(V)[1]
     return mvdigamma(ρ, n/2) + ρ*log(2) +logdet(V)
 end
+
+#--------------------------
+# SampleList
+#--------------------------
+# E[x^2]
+function squaremean(p::SampleList)
+    if p.dimension == 1
+        return sum(p.weights.*p.samples.*p.samples)
+    else
+        s = zeros(p.dimension,p.dimension)
+        for n=1:p.num_samples
+            s .+= p.weights[n] .* p.samples[n] * transpose(p.samples[n])
+        end
+        return s
+    end
+end
+
+# E[logx]
+function logmean(p::SampleList)
+    sum(p.weights .* log.(p.samples))
+end

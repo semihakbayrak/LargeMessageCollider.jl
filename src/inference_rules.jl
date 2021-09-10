@@ -61,6 +61,18 @@ function collide(p::C, q::C; canonical=true) where C<:Canonical
     end
 end
 
+function collide(p::F1, logq::Function; proposal::F2, num_samples::Int) where F1<:Distribution where F2<:Distribution
+    samples = []
+    unnorm_weights = []
+    for n=1:num_samples
+        sample = rand(proposal)
+        push!(samples,sample)
+        unnorm_weight = pdf(p,sample)*exp(logq(sample))/pdf(proposal,sample)
+        push!(unnorm_weights,unnorm_weight)
+    end
+    return SampleList(samples, unnorm_weights), unnorm_weights
+end
+
 #-------------------
 # Gaussian inference rules
 #-------------------
