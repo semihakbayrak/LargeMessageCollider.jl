@@ -1,5 +1,5 @@
 # Belief Propagation and Variational Message Passing utilities
-export VMP, collide, poisson, normal, mvnormal, transit, normalmix, categorical
+export VMP, collide, poisson, normal, mvnormal, transit, normalmix, categorical, gammadist
 
 #-------------------
 # Collision of beliefs
@@ -172,7 +172,8 @@ function mvnormal(x::Nothing, μ::Distribution, τ::Distribution)
 end
 categorical(x::Nothing, p::Dirichlet) = exp_family(Categorical, logmean(p))
 categorical(x::Categorical, p::Nothing) = Dirichlet(x.p .+ 1)
-gamma(x::Real, α::Distribution, θ::Nothing) = InverseGamma(mean(α)-1,x,check_args=false)
+#gammadist(x::Real, α::Distribution, θ::Nothing) = InverseGamma(mean(α)-1,x,check_args=false)
+gammadist(x::Real, α::Distribution, θ::Nothing) = Canonical(InverseGamma,[mean(α)-1,-x])
 
 #-------------------
 # State transition nodes to calculate joint distributions

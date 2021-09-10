@@ -105,7 +105,7 @@ end
 function exp_family(p::InverseGamma)
     h(x::Number) = 1
     T(x::Number) = [log(x),1/x]
-    η = [shape(p)-1, -scale(p)]
+    η = [-shape(p)-1, -scale(p)]
     A_eval = loggamma(shape(p)) - shape(p)*log(scale(p))
     A(η::Array) = loggamma(-η[1]-1) - (-η[1]-1)*log(-η[2])
 
