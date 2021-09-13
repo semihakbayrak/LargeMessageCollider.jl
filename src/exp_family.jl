@@ -117,7 +117,7 @@ function exp_family(p::InverseGamma)
 end
 
 function exp_family(t::Type{F}, η::Vector, check_args=true) where F<:InverseGamma
-    α, θ = η[1] + 1, -η[2]
+    α, θ = -η[1] - 1, -η[2]
     InverseGamma(α,θ,check_args=check_args)
 end
 

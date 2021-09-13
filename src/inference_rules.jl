@@ -173,7 +173,7 @@ end
 categorical(x::Nothing, p::Dirichlet) = exp_family(Categorical, logmean(p))
 categorical(x::Categorical, p::Nothing) = Dirichlet(x.p .+ 1)
 #gammadist(x::Real, α::Distribution, θ::Nothing) = InverseGamma(mean(α)-1,x,check_args=false)
-gammadist(x::Real, α::Distribution, θ::Nothing) = Canonical(InverseGamma,[mean(α)-1,-x])
+gammadist(x::Real, α::Distribution, θ::Nothing) = Canonical(InverseGamma,[-mean(α),-x])
 
 #-------------------
 # State transition nodes to calculate joint distributions
