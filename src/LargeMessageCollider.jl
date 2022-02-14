@@ -13,6 +13,7 @@ import Base.*
 import Base.+
 import Base.-
 import LinearAlgebra.\
+import Distributions.logpdf
 
 include("utilities.jl")
 include("info_measure.jl")
