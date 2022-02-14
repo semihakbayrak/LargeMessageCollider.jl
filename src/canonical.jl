@@ -16,6 +16,9 @@ struct Canonical
     end
 end
 
+# logpdf Canonical form
+logpdf(p::Canonical, x) = log(p.h(x)) + transpose(p.η)*p.T(x) - p.A_eval
+
 # Convert methods between Canonical type and Distribution type
 convert(::Type{F}, p::Canonical) where {F<:Distribution} = convert(p.dist, p.η)
 
