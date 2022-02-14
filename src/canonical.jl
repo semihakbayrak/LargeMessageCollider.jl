@@ -1,23 +1,28 @@
-export exp_family, Canonical
+export Canonical
 
 #https://en.wikipedia.org/wiki/Exponential_family
 # p(x) = h(x) exp{η'T(x) - A(η)}
 
-# Canonical parameterization of distributions. Useful to handle messages with improper dist.s
+# Canonical parameterization of distributions.
 struct Canonical
-    dist
-    η
-    function Canonical(t::Type{F}, c::Vector) where F<:Distribution
-        new(t,c)
+    dist # distribution
+    h # base measure
+    T # sufficient statistics
+    η # natural (canonical) parameters
+    A_eval # log partition evaluated
+    A # log partition function
+    function Canonical(t::Type{F}, h::Function, T::Function, η::AbstractVector, A_eval::Number, A::Function) where F<:Distribution
+        new(t,h,T,η,A_eval,A)
     end
 end
 
-exp_family(c::Canonical) = exp_family(c.dist, c.η)
+# Convert methods between Canonical type and Distribution type
+convert(::Type{F}, p::Canonical) where {F<:Distribution} = convert(p.dist, p.η)
 
 #--------------------------
 # univariate Normal distribution
 #--------------------------
-function exp_family(p::Normal)
+function convert(::Type{F}, p::Normal) where F<:Canonical
     h(x::Number) = 1/sqrt(2*pi)
     T(x::Number) = [x,x^2]
     η = [mean(p)/var(p), -0.5/var(p)]
@@ -28,10 +33,10 @@ function exp_family(p::Normal)
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(Normal, h_func, T_func, η, A_eval, A_func)
 end
 
-function exp_family(t::Type{F}, η::Vector) where F<:Normal
+function convert(t::Type{F}, η::AbstractVector) where F<:Normal
     v = -0.5/η[2]
     m = η[1]*v
     Normal(m,sqrt(v))
@@ -40,7 +45,7 @@ end
 #--------------------------
 # multivariate Normal distribution
 #--------------------------
-function exp_family(p::MvNormal)
+function convert(::Type{F}, p::MvNormal) where F<:Canonical
     k = length(mean(p))
     W = inv(cov(p))
 
@@ -54,20 +59,10 @@ function exp_family(p::MvNormal)
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(MvNormal, h_func, T_func, η, A_eval, A_func)
 end
 
-# function exp_family(t::Type{F}, η::Vector) where F<:MvNormal
-#     n = length(η)
-#     Δ = 1 + 4*n
-#     k = Int((-1 + sqrt(Δ))/2)
-#     W = Matrix(Hermitian(-2*reshape(η[k+1:end],(k,k))))
-#     V = Matrix(Hermitian(inv(W)))
-#     m = W\η[1:k]
-#     MvNormal(m,V)
-# end
-
-function exp_family(t::Type{F}, η) where F<:MvNormal
+function convert(t::Type{F}, η::AbstractVector) where F<:MvNormal
     n = length(η)
     Δ = 1 + 4*n
     k = Int((-1 + sqrt(Δ))/2)
@@ -80,7 +75,7 @@ end
 #--------------------------
 # Gamma distribution
 #--------------------------
-function exp_family(p::Gamma)
+function convert(::Type{F}, p::Gamma) where F<:Canonical
     h(x::Number) = 1
     T(x::Number) = [log(x),x]
     η = [shape(p)-1, -rate(p)]
@@ -91,10 +86,10 @@ function exp_family(p::Gamma)
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(Gamma, h_func, T_func, η, A_eval, A_func)
 end
 
-function exp_family(t::Type{F}, η::Vector, check_args=true) where F<:Gamma
+function convert(t::Type{F}, η::AbstractVector; check_args=true) where F<:Gamma
     α, θ = η[1] + 1, -1/η[2]
     Gamma(α,θ,check_args=check_args)
 end
@@ -102,7 +97,7 @@ end
 #--------------------------
 # InverseGamma distribution
 #--------------------------
-function exp_family(p::InverseGamma)
+function convert(::Type{F}, p::InverseGamma) where F<:Canonical
     h(x::Number) = 1
     T(x::Number) = [log(x),1/x]
     η = [-shape(p)-1, -scale(p)]
@@ -113,10 +108,10 @@ function exp_family(p::InverseGamma)
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(InverseGamma, h_func, T_func, η, A_eval, A_func)
 end
 
-function exp_family(t::Type{F}, η::Vector, check_args=true) where F<:InverseGamma
+function convert(t::Type{F}, η::AbstractVector; check_args=true) where F<:InverseGamma
     α, θ = -η[1] - 1, -η[2]
     InverseGamma(α,θ,check_args=check_args)
 end
@@ -124,7 +119,7 @@ end
 #--------------------------
 # Poisson distribution
 #--------------------------
-function exp_family(p::Poisson)
+function convert(::Type{F}, p::Poisson) where F<:Canonical
     h(x::Number) = 1/factorial(x)
     T(x::Number) = [x]
     η = [log(rate(p))]
@@ -135,10 +130,10 @@ function exp_family(p::Poisson)
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(Poisson, h_func, T_func, η, A_eval, A_func)
 end
 
-function exp_family(t::Type{F}, η::Vector) where F<:Poisson
+function convert(t::Type{F}, η::AbstractVector) where F<:Poisson
     λ = exp(η[1])
     Poisson(λ)
 end
@@ -147,7 +142,7 @@ end
 # Dirichlet distribution
 #--------------------------
 # We use variant 2 in https://en.wikipedia.org/wiki/Exponential_family
-function exp_family(p::Dirichlet)
+function convert(::Type{F}, p::Dirichlet) where F<:Canonical
     h(x::Array) = 1
     T(x::Array) = log.(x)
     η = p.alpha .- 1
@@ -158,10 +153,10 @@ function exp_family(p::Dirichlet)
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(Dirichlet, h_func, T_func, η, A_eval, A_func)
 end
 
-function exp_family(t::Type{F}, η::Vector) where F<:Dirichlet
+function convert(t::Type{F}, η::AbstractVector) where F<:Dirichlet
     α = η .+ 1
     Dirichlet(α)
 end
@@ -169,23 +164,23 @@ end
 #--------------------------
 # Categorical distribution
 #--------------------------
-# We use variant 1 in https://en.wikipedia.org/wiki/Exponential_family
-function exp_family(p::Categorical, normalize=false)
-    if normalize p_vec = p.p ./ sum(p.p) else p_vec = p.p end
+# We use variant 3 in https://en.wikipedia.org/wiki/Exponential_family
+function convert(::Type{F}, p::Categorical) where F<:Canonical
+    p_vec = p.p ./ sum(p.p) # make sure that mean parameters add up to 1
     h(x::Array) = 1
     T(x::Array) = x .== ones(length(p_vec))
-    η = log.(p_vec)
-    A_eval = 0
-    A(η::Array) = 0
+    η = [log.(p_vec[1:end-1]./p_vec[end]);0]
+    A_eval = -log(p_vec[end])
+    A(η::Array) = log(sum(exp.(η)))
 
     h_func = (x)->h(x)
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(Categorical, h_func, T_func, η, A_eval, A_func)
 end
 
-function exp_family(t::Type{F}, η::Vector, check_args=true, normalize=true) where F<:Categorical
+function convert(t::Type{F}, η::AbstractVector; check_args=true, normalize=true) where F<:Categorical
     if normalize p_vec = exp.(η) ./ sum(exp.(η)) else p_vec = exp.(η) end
     Categorical(p_vec, check_args=check_args)
 end
@@ -193,7 +188,7 @@ end
 #--------------------------
 # Wishart distribution
 #--------------------------
-function exp_family(p::Wishart)
+function convert(::Type{F}, p::Wishart) where F<:Canonical
     V = p.S.mat
     ρ = size(V)[1]
     n = p.df
@@ -211,7 +206,7 @@ function exp_family(p::Wishart)
     return h_func, T_func, η, A_eval, A_func
 end
 
-function exp_family(t::Type{F}, η::Vector, check_args=true) where F<:Wishart
+function convert(t::Type{F}, η::AbstractVector; check_args=true) where F<:Wishart
     ρ = Int(sqrt(length(η[1:end-1])))
     n = 2*η[end] + ρ + 1
     W = Matrix(Hermitian(-2*reshape(η[1:end-1],(ρ,ρ))))

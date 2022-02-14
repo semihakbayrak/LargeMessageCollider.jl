@@ -16,7 +16,7 @@ import LinearAlgebra.\
 
 include("utilities.jl")
 include("info_measure.jl")
-include("exp_family.jl")
+include("canonical.jl")
 include("sample_list.jl")
 include("expectations.jl")
 include("inference_rules.jl")

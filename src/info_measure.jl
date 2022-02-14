@@ -7,7 +7,7 @@ end
 
 function bregman_div(x::Array, y::Array, f::Function)
     grad_f = f'(y)
-    f(x) - f(y) - (x-y)'*grad_f
+    f(x) - f(y) - transpose(x-y)*grad_f
 end
 
 # For details check "ENTROPIES AND CROSS-ENTROPIES OF EXPONENTIAL FAMILIES" by Nielsen and Nock
@@ -19,23 +19,7 @@ end
 
 # https://en.wikipedia.org/wiki/Cross_entropy
 # -E_q(x)[logp(x)]
-function cross_entropy(q::F, p::F) where F<:Distribution
-    #return differential_entropy(q) + kl_div(q,p)
-    return entropy(q) + kl_div(q,p)
-end
-
-# # https://en.wikipedia.org/wiki/Differential_entropy
-# # -E_q(x)[logq(x)]
-# function differential_entropy(p::Distribution)
-#     h_p, T_p, η_p, A_eval_p, A_p = exp_family(p)
-#     if length(η_p) > 1
-#         grad_A = A_p'(η_p)
-#         return A_eval_p - η_p' * grad_A - baseE(p)
-#     else
-#         d_A = A_p'(η_p)
-#         return A_eval_p - η_p * d_A - baseE(p)
-#     end
-# end
+cross_entropy(q::F, p::F) where {F<:Distribution} = entropy(q) + kl_div(q,p)
 
 # https://en.wikipedia.org/wiki/Conditional_entropy
 # -∫q(x_{t},x_{t-1})*logq(x_{t}|x_{t-1}) dx_{t} dx_{t-1}
