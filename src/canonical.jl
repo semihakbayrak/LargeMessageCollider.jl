@@ -1,4 +1,4 @@
-export Canonical
+export Canonical, convert, logpdf, pdf
 
 #https://en.wikipedia.org/wiki/Exponential_family
 # p(x) = h(x) exp{η'T(x) - A(η)}
@@ -16,8 +16,9 @@ struct Canonical
     end
 end
 
-# logpdf Canonical form
+# logpdf and pdf Canonical form
 logpdf(p::Canonical, x) = log(p.h(x)) + transpose(p.η)*p.T(x) - p.A_eval
+pdf(p::Canonical, x) = exp(logpdf(p,x))
 
 # Convert methods between Canonical type and Distribution type
 convert(::Type{F}, p::Canonical) where {F<:Distribution} = convert(p.dist, p.η)

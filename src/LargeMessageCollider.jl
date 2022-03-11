@@ -12,8 +12,11 @@ using StatsBase
 import Base.*
 import Base.+
 import Base.-
+import Base./
+import Base.convert
 import LinearAlgebra.\
 import Distributions.logpdf
+import Distributions.pdf
 
 include("utilities.jl")
 include("info_measure.jl")
