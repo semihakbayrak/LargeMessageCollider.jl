@@ -1,4 +1,4 @@
-export Canonical, convert, logpdf, pdf
+export Canonical, convert, logpdf, pdf, link, invlink
 
 #https://en.wikipedia.org/wiki/Exponential_family
 # p(x) = h(x) exp{η'T(x) - A(η)}
@@ -46,6 +46,20 @@ function convert(t::Type{F}, η::AbstractVector) where F<:Normal
     Normal(m,sqrt(v))
 end
 
+function link(t::Type{F}, η::AbstractVector) where F<:Normal
+    v = -0.5/η[2]
+    m = η[1]*v
+    μ = [m,v+m^2]
+    return μ
+end
+
+function invlink(t::Type{F}, μ::AbstractVector) where F<:Normal
+    m = μ[1]
+    v = μ[2] - m^2
+    η = [m/v, -0.5/v]
+    return η
+end
+
 #--------------------------
 # multivariate Normal distribution
 #--------------------------
@@ -76,6 +90,24 @@ function convert(t::Type{F}, η::AbstractVector) where F<:MvNormal
     MvNormal(m,V)
 end
 
+function link(t::Type{F}, η::AbstractVector) where F<:MvNormal
+    p = convert(MvNormal, η)
+    μ = [mean(p);vec(mean(p)*mean(p)' + cov(p))]
+    return μ
+end
+
+function invlink(t::Type{F}, μ::AbstractVector) where F<:MvNormal
+    n = length(μ)
+    Δ = 1 + 4*n
+    k = Int((-1 + sqrt(Δ))/2)
+    m = μ[1:k]
+    S = reshape(μ[k+1:end],(k,k))
+    V = Matrix(Hermitian(S-m*m'))
+    p = MvNormal(m,V)
+    q = convert(Canonical,p)
+    return q.η
+end
+
 #--------------------------
 # Gamma distribution
 #--------------------------
@@ -97,6 +129,14 @@ function convert(t::Type{F}, η::AbstractVector; check_args=true) where F<:Gamma
     α, θ = η[1] + 1, -1/η[2]
     Gamma(α,θ,check_args=check_args)
 end
+
+function link(t::Type{F}, η::AbstractVector) where F<:Gamma
+    p = convert(Gamma, η)
+    μ = [digamma(shape(p)) - log(rate(p)),mean(p)]
+    return μ
+end
+
+# No analytical inverse link function for Gamma
 
 #--------------------------
 # InverseGamma distribution
@@ -120,6 +160,14 @@ function convert(t::Type{F}, η::AbstractVector; check_args=true) where F<:Inver
     InverseGamma(α,θ,check_args=check_args)
 end
 
+function link(t::Type{F}, η::AbstractVector) where F<:InverseGamma
+    p = convert(InverseGamma, η)
+    μ = [log(scale(p)) - digamma(shape(p)),1/mean(p)]
+    return μ
+end
+
+# No analytical inverse link function for InverseGamma
+
 #--------------------------
 # Poisson distribution
 #--------------------------
@@ -140,6 +188,78 @@ end
 function convert(t::Type{F}, η::AbstractVector) where F<:Poisson
     λ = exp(η[1])
     Poisson(λ)
+end
+
+function link(t::Type{F}, η::AbstractVector) where F<:Poisson
+    μ = exp.(η)
+    return μ
+end
+
+function invlink(t::Type{F}, μ::AbstractVector) where F<:Poisson
+    η = log.(μ)
+    return η
+end
+
+#--------------------------
+# Beta distribution
+#--------------------------
+# We use variant 2 in https://en.wikipedia.org/wiki/Exponential_family
+function convert(::Type{F}, p::Beta) where F<:Canonical
+    h(x::Number) = 1
+    T(x::Number) = [log(x),log(1-x)]
+    η = [p.α-1, p.β-1]
+    A_eval = loggamma(p.α) + loggamma(p.β) - loggamma(p.α+p.β)
+    A(η::Array) = loggamma(η[1]) + loggamma(η[2]) - loggamma(sum(η))
+
+    h_func = (x)->h(x)
+    T_func = (x)->T(x)
+    A_func = (η)->A(η)
+
+    return Canonical(Beta, h_func, T_func, η, A_eval, A_func)
+end
+
+function convert(t::Type{F}, η::AbstractVector) where F<:Beta
+    α, β = η .+ 1
+    Beta(α,β)
+end
+
+function link(t::Type{F}, η::AbstractVector) where F<:Beta
+    p = convert(Beta, η)
+    μ = [digamma(p.α) - digamma(p.α+p.β),digamma(p.β) - digamma(p.α+p.β)]
+    return μ
+end
+
+# No analytical inverse link function for Beta
+
+#--------------------------
+# Bernoulli distribution
+#--------------------------
+function convert(::Type{F}, p::Bernoulli) where F<:Canonical
+    h(x::Number) = 1
+    T(x::Number) = [x]
+    η = [log(mean(p)/(1-mean(p)))]
+    A_eval = -log(1-mean(p))
+    A(η::Array) = log(1+exp(η[1]))
+
+    h_func = (x)->h(x)
+    T_func = (x)->T(x)
+    A_func = (η)->A(η)
+
+    return Canonical(Bernoulli, h_func, T_func, η, A_eval, A_func)
+end
+
+function convert(t::Type{F}, η::AbstractVector) where F<:Bernoulli
+    Bernoulli(logistic(η[1]))
+end
+
+function link(t::Type{F}, η::AbstractVector) where F<:Bernoulli
+    μ = logistic.(η)
+    return μ
+end
+
+function invlink(t::Type{F}, μ::AbstractVector) where F<:Bernoulli
+    η = logit.(μ)
+    return η
 end
 
 #--------------------------
@@ -165,6 +285,14 @@ function convert(t::Type{F}, η::AbstractVector) where F<:Dirichlet
     Dirichlet(α)
 end
 
+function link(t::Type{F}, η::AbstractVector) where F<:Dirichlet
+    α = η .+ 1
+    μ = [digamma.(α) .- digamma(sum(α))]
+    return μ
+end
+
+# No analytical inverse link function for Dirichlet
+
 #--------------------------
 # Categorical distribution
 #--------------------------
@@ -185,8 +313,18 @@ function convert(::Type{F}, p::Categorical) where F<:Canonical
 end
 
 function convert(t::Type{F}, η::AbstractVector; check_args=true, normalize=true) where F<:Categorical
-    if normalize p_vec = exp.(η) ./ sum(exp.(η)) else p_vec = exp.(η) end
+    if normalize p_vec = softmax(η) else p_vec = exp.(η) end
     Categorical(p_vec, check_args=check_args)
+end
+
+function link(t::Type{F}, η::AbstractVector) where F<:Categorical
+    μ = softmax(η)
+    return μ
+end
+
+function invlink(t::Type{F}, μ::AbstractVector) where F<:Categorical
+    η = [log.(μ[1:end-1]./μ[end]);0]
+    return η
 end
 
 #--------------------------
@@ -217,3 +355,14 @@ function convert(t::Type{F}, η::AbstractVector; check_args=true) where F<:Wisha
     V = Matrix(Hermitian(inv(W)))
     Wishart(n,V,check_args)
 end
+
+function link(t::Type{F}, η::AbstractVector) where F<:Wishart
+    p = convert(Wishart,η)
+    V = p.S.mat
+    n = p.df
+    ρ = size(V)[1]
+    μ = [vec(mean(p));mvdigamma(ρ, n/2) + ρ*log(2) +logdet(V)]
+    return μ
+end
+
+# No analytical inverse link function for Wishart
