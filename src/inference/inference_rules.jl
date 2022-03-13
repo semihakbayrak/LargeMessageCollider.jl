@@ -5,59 +5,51 @@ export VMP, collide, poisson, normal, mvnormal, transit, normalmix, categorical,
 # Collision of beliefs
 #-------------------
 function collide(p::F...) where F<:Distribution
-    h_p, T_p, η_p, A_eval_p, A_p = exp_family(p[1])
-    η = η_p
+    q = convert(Canonical,p[1])
+    η = q.η
     for dist in p[2:end]
-        h_p, T_p, η_p, A_eval_p, A_p = exp_family(dist)
-        η .+= η_p
+        q = convert(Canonical,dist)
+        η .+= q.η
     end
-    return exp_family(F,η)
+    return convert(F,η)
 end
 
 # For some reason Julia differentiates FullNormal and DiagNormal(diagonal covariance matrix)
 # which restrain the generality of the above collider!
 function collide(p::MvNormal, q::MvNormal)
-    h_p, T_p, η_p, A_eval_p, A_p = exp_family(p)
-    h_q, T_q, η_q, A_eval_q, A_q = exp_family(q)
-    η = η_p + η_q
-    return exp_family(MvNormal,η)
+    pc = convert(Canonical,p)
+    qc = convert(Canonical,q)
+    η = pc.η .+ qc.η
+    return convert(MvNormal,η)
 end
 
 function collide(p::F, q::C; canonical=false) where F<:Distribution where C<:Canonical
     if F <: q.dist
-        h_p, T_p, η_p, A_eval_p, A_p = exp_family(p)
+        pc = convert(Canonical,p)
+        η = pc.η .+ q.η
+        res = Canonical(F,η)
         if canonical
-            return Canonical(q.dist, η_p .+ q.η)
+            return res
         else
-            return exp_family(F, η_p .+ q.η)
+            return convert(F,res)
         end
     else
-        println("Nonconjugacy detected")
+        error("Nonconjugacy detected")
     end
 end
 
-function collide(q::C, p::F; canonical=false) where F<:Distribution where C<:Canonical
-    if F <: q.dist
-        h_p, T_p, η_p, A_eval_p, A_p = exp_family(p)
-        if canonical
-            return Canonical(q.dist, η_p .+ q.η)
-        else
-            return exp_family(F, η_p .+ q.η)
-        end
-    else
-        println("Nonconjugacy detected")
-    end
-end
+collide(q::C, p::F; canonical=false) where {F<:Distribution, C<:Canonical} = collide(p,q,canonical=canonical)
 
 function collide(p::C, q::C; canonical=true) where C<:Canonical
     if p.dist == q.dist
+        res = Canonical(p.dist, p.η .+ q.η)
         if canonical
-            return Canonical(p.dist, p.η .+ q.η)
+            return res
         else
-            return exp_family(p.dist, p.η .+ q.η)
+            return convert(p.dist,res)
         end
     else
-        println("Nonconjugacy detected")
+        error("Nonconjugacy detected")
     end
 end
 
@@ -72,6 +64,88 @@ function collide(p::F1, logq::Function; proposal::F2, num_samples::Int) where F1
     end
     return SampleList(samples, unnorm_weights), unnorm_weights
 end
+
+(*)(p::F...) where {F<:Distribution} = collide(p...)
+(*)(p::MvNormal, q::MvNormal) = collide(p,q)
+(*)(p::F, q::C) where {F<:Distribution, C<:Canonical} = collide(p,q)
+(*)(q::C, p::F) where {F<:Distribution, C<:Canonical} = collide(p,q)
+(*)(p::C, q::C) where C<:Canonical = collide(p,q)
+
+#-------------------
+# Division of beliefs
+#-------------------
+function divide(p::F, q::F; canonical=true) where F<:Distribution
+    pc = convert(Canonical,p)
+    qc = convert(Canonical,q)
+    res = Canonical(F,pc.η.-qc.η)
+    if canonical
+        return res
+    else
+        return convert(F,res)
+    end
+end
+
+# For some reason Julia differentiates FullNormal and DiagNormal(diagonal covariance matrix)
+# which restrain the generality of the above collider!
+function divide(p::MvNormal, q::MvNormal; canonical=true)
+    pc = convert(Canonical,p)
+    qc = convert(Canonical,q)
+    res = Canonical(MvNormal,pc.η.-qc.η)
+    if canonical
+        return res
+    else
+        return convert(MvNormal,res)
+    end
+end
+
+function divide(p::F, q::C; canonical=true) where F<:Distribution where C<:Canonical
+    if F <: q.dist
+        pc = convert(Canonical,p)
+        η = pc.η .- q.η
+        res = Canonical(F,η)
+        if canonical
+            return res
+        else
+            return convert(F,res)
+        end
+    else
+        error("Nonconjugacy detected")
+    end
+end
+
+function divide(q::C, p::F; canonical=true) where F<:Distribution where C<:Canonical
+    if F <: q.dist
+        pc = convert(Canonical,p)
+        η = q.η .- pc.η
+        res = Canonical(F,η)
+        if canonical
+            return res
+        else
+            return convert(F,res)
+        end
+    else
+        error("Nonconjugacy detected")
+    end
+end
+
+function divide(p::C, q::C; canonical=true) where C<:Canonical
+    if p.dist == q.dist
+        res = Canonical(p.dist, p.η .- q.η)
+        if canonical
+            return res
+        else
+            return convert(p.dist,res)
+        end
+    else
+        error("Nonconjugacy detected")
+    end
+end
+
+(/)(p::F,q::F) where {F<:Distribution} = divide(p,q)
+(/)(p::MvNormal, q::MvNormal) = divide(p,q)
+(/)(p::F, q::C) where {F<:Distribution, C<:Canonical} = divide(p,q)
+(/)(q::C, p::F) where {F<:Distribution, C<:Canonical} = divide(q,p)
+(/)(p::C, q::C) where C<:Canonical = divide(p,q)
 
 #-------------------
 # Gaussian inference rules

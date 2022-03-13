@@ -6,15 +6,17 @@ export Canonical, convert, logpdf, pdf, link, invlink
 # Canonical parameterization of distributions.
 struct Canonical
     dist # distribution
-    h # base measure
-    T # sufficient statistics
-    η # natural (canonical) parameters
-    A_eval # log partition evaluated
-    A # log partition function
-    function Canonical(t::Type{F}, h::Function, T::Function, η::AbstractVector, A_eval::Number, A::Function) where F<:Distribution
+    h::Union{Nothing,Function} # base measure
+    T::Union{Nothing,Function} # sufficient statistics
+    η::AbstractVector # natural (canonical) parameters
+    A_eval::Union{Nothing,Number} # log partition evaluated
+    A::Union{Nothing,Function} # log partition function
+    function Canonical(t::Type{F}, h, T, η, A_eval, A) where F<:Distribution
         new(t,h,T,η,A_eval,A)
     end
 end
+
+Canonical(t,η) = Canonical(t,nothing,nothing,η,nothing,nothing)
 
 # logpdf and pdf Canonical form
 logpdf(p::Canonical, x) = log(p.h(x)) + transpose(p.η)*p.T(x) - p.A_eval
