@@ -1,3 +1,4 @@
+export poisson, normal, mvnormal, categorical, bernoulli
 #-------------------
 # Gaussian BP rules
 #-------------------
@@ -59,8 +60,9 @@ end
 #-------------------
 # Conditioning to observations
 #-------------------
-poisson(x::Int, λ::Nothing) = exp_family(Gamma,[x,-1])
+poisson(x::Int, λ::Nothing) = convert(Gamma,[x,-1.],check_args=false)
 # normal is parameterized with mean and precision
-normal(x::Real, μ::Real, τ::Nothing) = exp_family(Gamma,[0.5,x*μ - μ^2/2 - x^2/2])
-normal(x::Real, μ::Nothing, τ::Real) = exp_family(Normal,[x*τ,-τ/2])
+normal(x::Real, μ::Real, τ::Nothing) = convert(Gamma,[0.5,x*μ - μ^2/2 - x^2/2],check_args=false)
+normal(x::Real, μ::Nothing, τ::Real) = convert(Normal,[x*τ,-τ/2])
 categorical(x::Vector, p::Nothing) = Dirichlet(x .+ 1)
+bernoulli(x::Real, p::Nothing) = Beta(x+1,2-x)

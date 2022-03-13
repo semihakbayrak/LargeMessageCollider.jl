@@ -25,6 +25,8 @@ include("distributions/sample_list.jl")
 include("distributions/expectations.jl")
 include("inference/inference_algorithms.jl")
 include("inference/inference_rules.jl")
+include("inference/bp.jl")
+include("inference/vmp.jl")
 include("optimizer.jl")
 include("inference/cvi.jl")
 

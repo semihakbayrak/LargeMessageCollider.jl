@@ -1,23 +1,24 @@
+export normal, mvnormal, transit, normalmix, categorical, gammadist
 #-------------------
 # VMP rules (mean-field assumption) for standard distributions
 #-------------------
 # normal is parameterized with mean and precision
-normal(x::Real, μ::Distribution, τ::Nothing) = Canonical(Gamma,[0.5,x*mean(μ) - squaremean(μ)/2 - x^2/2])
-normal(x::Distribution, μ::Distribution, τ::Nothing) = Canonical(Gamma,[0.5,mean(x)*mean(μ) - squaremean(μ)/2 - squaremean(x)/2])
-normal(x::Real, μ::Nothing, τ::Distribution) = Canonical(Normal,[x*mean(τ),-mean(τ)/2])
-normal(x::Distribution, μ::Nothing, τ::Distribution) = Canonical(Normal,[mean(x)*mean(τ),-mean(τ)/2])
-normal(x::Nothing, μ::Distribution, τ::Distribution) = Canonical(Normal,[mean(μ)*mean(τ),-mean(τ)/2])
+normal(x::Real, μ::Distribution, τ::Nothing) = convert(Gamma,[0.5,x*mean(μ) - squaremean(μ)/2 - x^2/2])
+normal(x::Distribution, μ::Distribution, τ::Nothing) = convert(Gamma,[0.5,mean(x)*mean(μ) - squaremean(μ)/2 - squaremean(x)/2])
+normal(x::Real, μ::Nothing, τ::Distribution) = convert(Normal,[x*mean(τ),-mean(τ)/2])
+normal(x::Distribution, μ::Nothing, τ::Distribution) = convert(Normal,[mean(x)*mean(τ),-mean(τ)/2])
+normal(x::Nothing, μ::Distribution, τ::Distribution) = convert(Normal,[mean(μ)*mean(τ),-mean(τ)/2])
 function mvnormal(x::Vector, μ::Distribution, τ::Nothing)
     k = length(x)
     V_inv = x*x' - x*mean(μ)' - mean(μ)*x' + squaremean(μ)
     η = [vec(-0.5*V_inv); 0.5]
-    Canonical(Wishart,η,false)
+    convert(Wishart,Canonical(Wishart,η),check_args=false)
 end
 function mvnormal(x::Distribution, μ::Distribution, τ::Nothing)
     k = length(mean(x))
     V_inv = squaremean(x) - mean(x)*mean(μ)' - mean(μ)*mean(x)' + squaremean(μ)
     η = [vec(-0.5*V_inv); 0.5]
-    Canonical(Wishart,η,false)
+    convert(Wishart,Canonical(Wishart,η),check_args=false)
 end
 function mvnormal(x::Vector, μ::Nothing, τ::Distribution)
     MvNormal(x,inv(mean(τ)))
@@ -28,7 +29,7 @@ end
 function mvnormal(x::Nothing, μ::Distribution, τ::Distribution)
     MvNormal(mean(μ),inv(mean(τ)))
 end
-categorical(x::Nothing, p::Dirichlet) = Canonical(Categorical, logmean(p))
+categorical(x::Nothing, p::Dirichlet) = convert(Categorical, logmean(p))
 categorical(x::Categorical, p::Nothing) = Dirichlet(x.p .+ 1)
 #gammadist(x::Real, α::Distribution, θ::Nothing) = InverseGamma(mean(α)-1,x,check_args=false)
 gammadist(x::Real, α::Distribution, θ::Nothing) = Canonical(InverseGamma,[-mean(α),-x])
@@ -113,7 +114,7 @@ end
 
 function normalmix(y_n::Number, z::Categorical, qm_::Array{Normal{Float64}}, qw_::Nothing)
     K = length(z.p)
-    return Canonical.(Gamma,[[0.5*z.p[k],z.p[k]*(mean(qm_[k])*y_n - y_n^2/2 - squaremean(qm_[k])/2)] for k=1:K])
+    return convert.(Gamma,[[0.5*z.p[k],z.p[k]*(mean(qm_[k])*y_n - y_n^2/2 - squaremean(qm_[k])/2)] for k=1:K])
 end
 
 function normalmix(y_n::Nothing, z::Categorical, qm_::Array{Normal{Float64}}, qw_::Array{Gamma{Float64}})
