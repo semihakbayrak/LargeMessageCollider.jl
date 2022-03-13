@@ -20,12 +20,13 @@ import Distributions.pdf
 
 include("utilities.jl")
 include("info_measure.jl")
-include("canonical.jl")
-include("sample_list.jl")
-include("expectations.jl")
-include("inference_rules.jl")
+include("distributions/canonical.jl")
+include("distributions/sample_list.jl")
+include("distributions/expectations.jl")
+include("inference/inference_algorithms.jl")
+include("inference/inference_rules.jl")
 include("optimizer.jl")
-include("cvi.jl")
+include("inference/cvi.jl")
 
 
 end
