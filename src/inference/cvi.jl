@@ -5,7 +5,7 @@ export approximateMarginal!
 # Gaussian case is implemented. It will be generalized to other distributions soon.
 
 # Univariate Normal incoming message
-function approximateMarginal!(algo::F1, f::F2; out::T1, in::T2) where {F1<:CVI, F2<:Union{Nothing,Function}, T1<:Distribution, T2<:Normal}
+function approximateMarginal!(algo::F1, f::F2, out::T, in::Normal) where {F1<:CVI, F2<:Union{Nothing,Function}, T<:Distribution}
     η = convert(Canonical,in).η
     λ = deepcopy(η)
     q = convert(Normal,λ)
@@ -35,7 +35,7 @@ function approximateMarginal!(algo::F1, f::F2; out::T1, in::T2) where {F1<:CVI, 
 end
 
 # Multivariate Normal incoming message
-function approximateMarginal!(algo::F1, f::F2; out::T1, in::T2) where {F1<:CVI, F2<:Union{Nothing,Function}, T1<:Distribution, T2<:MvNormal}
+function approximateMarginal!(algo::F1, f::F2, out::T, in::MvNormal) where {F1<:CVI, F2<:Union{Nothing,Function}, T<:Distribution}
     η = convert(Canonical,in).η
     λ = deepcopy(η)
     q = convert(MvNormal,λ)

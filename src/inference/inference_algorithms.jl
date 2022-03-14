@@ -27,6 +27,6 @@ mutable struct CVI <: InferenceAlgorithm
     num_iterations
 end
 
-struct EVMP <: InferenceAlgorithm
+struct EVMP <: VMP
     num_samples
 end
