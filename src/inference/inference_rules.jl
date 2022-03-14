@@ -1,5 +1,5 @@
-# Belief Propagation and Variational Message Passing utilities
-export VMP, collide, poisson, normal, mvnormal, transit, normalmix, categorical, gammadist
+# Collision and division of distributions
+export collide, divide
 
 #-------------------
 # Collision of beliefs

@@ -8,6 +8,7 @@ using ForwardDiff
 using SpecialFunctions
 using StatsFuns
 using StatsBase
+using Flux.Optimise
 
 import Base.*
 import Base.+
@@ -29,6 +30,6 @@ include("inference/bp.jl")
 include("inference/vmp.jl")
 include("optimizer.jl")
 include("inference/cvi.jl")
-
+include("inference/ep.jl")
 
 end

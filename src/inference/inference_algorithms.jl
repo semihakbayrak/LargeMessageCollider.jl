@@ -1,3 +1,4 @@
+export InferenceAlgorithm, BP, VMP, EP, CVI, EVMP
 # Inference algortihms include 
 # Implemented:
 # Belief Propagation (BP) 
@@ -21,7 +22,11 @@ abstract type BP <: InferenceAlgorithm end
 abstract type VMP <: InferenceAlgorithm end
 abstract type EP <: InferenceAlgorithm end
 
-struct CVI <: InferenceAlgorithm
+mutable struct CVI <: InferenceAlgorithm
     optimizer
     num_iterations
+end
+
+struct EVMP <: InferenceAlgorithm
+    num_samples
 end
