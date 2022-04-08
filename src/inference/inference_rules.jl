@@ -11,8 +11,10 @@ function collide(p::F...) where F<:Distribution
         q = convert(Canonical,dist)
         η .+= q.η
     end
-    return convert(F,η)
+    if F<:Categorical return convert(Categorical,η) else return convert(F,η) end # * Check below
 end
+# *: Categorical is encoded as DiscreteNonParametric in Distributions.jl, which has a different convert method and causes problems
+# That is why convert(Categorical,η) is handled as a special case.
 
 # For some reason Julia differentiates FullNormal and DiagNormal(diagonal covariance matrix)
 # which restrain the generality of the above collider!
