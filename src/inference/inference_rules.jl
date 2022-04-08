@@ -41,7 +41,7 @@ end
 collide(q::C, p::F; canonical=false) where {F<:Distribution, C<:Canonical} = collide(p,q,canonical=canonical)
 
 function collide(p::C, q::C; canonical=true) where C<:Canonical
-    if p.dist == q.dist
+    if (p.dist <: q.dist) || (q.dist <: p.dist)
         res = Canonical(p.dist, p.η .+ q.η)
         if canonical
             return res

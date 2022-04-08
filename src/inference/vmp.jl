@@ -12,13 +12,13 @@ function mvnormal(x::Vector, μ::Distribution, τ::Nothing)
     k = length(x)
     V_inv = x*x' - x*mean(μ)' - mean(μ)*x' + squaremean(μ)
     η = [vec(-0.5*V_inv); 0.5]
-    convert(Wishart,Canonical(Wishart,η),check_args=false)
+    convert(Wishart,η,check_args=false)
 end
 function mvnormal(x::Distribution, μ::Distribution, τ::Nothing)
     k = length(mean(x))
     V_inv = squaremean(x) - mean(x)*mean(μ)' - mean(μ)*mean(x)' + squaremean(μ)
     η = [vec(-0.5*V_inv); 0.5]
-    convert(Wishart,Canonical(Wishart,η),check_args=false)
+    convert(Wishart,η,check_args=false)
 end
 function mvnormal(x::Vector, μ::Nothing, τ::Distribution)
     MvNormal(x,inv(mean(τ)))
@@ -40,7 +40,7 @@ gammadist(x::Real, α::Distribution, θ::Nothing) = Canonical(InverseGamma,[-mea
 
 # Structured VMP that find the forward message at the end of the transit node
 transit(m_f::Normal, a::Real, w::Gamma) = a*m_f + Normal(0,sqrt(1/mean(w)))
-transit(m_f::MvNormal, A::Matrix, W::Wishart) = A*m_f + MvNormal(zeros(size(A)[1]),inv(mean(W)))
+transit(m_f::MvNormal, A::Matrix, W::Wishart) = A*m_f + MvNormal(zeros(size(A)[1]),Matrix(Hermitian(inv(mean(W)))))
 
 # p(x_{t+1}|x_{t}) = N(x_{t+1}; A*x_{t},W^{-1})
 # m_f is filtered belief of x_{t}, m_s is smoothed belief of x_{t+1}
