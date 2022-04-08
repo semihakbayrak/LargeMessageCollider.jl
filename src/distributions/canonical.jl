@@ -347,7 +347,7 @@ function convert(::Type{F}, p::Wishart) where F<:Canonical
     T_func = (x)->T(x)
     A_func = (η)->A(η)
 
-    return h_func, T_func, η, A_eval, A_func
+    return Canonical(Wishart, h_func, T_func, η, A_eval, A_func)
 end
 
 function convert(t::Type{F}, η::AbstractVector; check_args=true) where F<:Wishart

@@ -38,6 +38,16 @@ gammadist(x::Real, α::Distribution, θ::Nothing) = Canonical(InverseGamma,[-mea
 # State transition nodes to calculate messages towards process noise node (for LDS) or stochastic matrix (for HMM)
 #-------------------
 
+# Structured VMP that find the forward message at the end of the transit node
+transit(m_f::Normal, a::Real, w::Gamma) = a*m_f + Normal(0,sqrt(1/mean(w)))
+transit(m_f::MvNormal, A::Matrix, W::Wishart) = A*m_f + MvNormal(zeros(size(A)[1]),inv(mean(W)))
+
+# p(x_{t+1}|x_{t}) = N(x_{t+1}; A*x_{t},W^{-1})
+# m_f is filtered belief of x_{t}, m_s is smoothed belief of x_{t+1}
+# Structured VMP that returns m_s(x_t), q(x_{t+1},x_t|y_{1:T})
+transit(m_f::Normal, m_s::Normal, a::Real, w::Gamma) = transit(m_f, m_s, a, mean(w))
+transit(m_f::MvNormal, m_s::MvNormal, A::Matrix, W::Wishart) = transit(m_f, m_s, A, mean(W))
+
 # Structured VMP message towards process noise precision
 function transit(q1::Normal, q2::Normal, q21::MvNormal, a::Real, w::Nothing)
     α = 1.5

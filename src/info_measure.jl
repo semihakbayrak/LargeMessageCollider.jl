@@ -11,10 +11,10 @@ function bregman_div(x::Array, y::Array, f::Function)
 end
 
 # For details check "ENTROPIES AND CROSS-ENTROPIES OF EXPONENTIAL FAMILIES" by Nielsen and Nock
+# KL[p||q] = E_p(x)[log(p(x)/q(x))]
 function kl_div(p::F, q::F) where F<:Distribution
-    h_p, T_p, η_p, A_eval_p, A_p = exp_family(p)
-    h_q, T_q, η_q, A_eval_q, A_q = exp_family(q)
-    return bregman_div(η_q,η_p,A_p)
+    p_canon, q_canon = convert(Canonical, p), convert(Canonical, q)
+    return bregman_div(q_canon.η,p_canon.η,p_canon.A)
 end
 
 # https://en.wikipedia.org/wiki/Cross_entropy

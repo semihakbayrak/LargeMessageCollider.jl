@@ -1,4 +1,4 @@
-export poisson, normal, mvnormal, categorical, bernoulli
+export poisson, normal, mvnormal, categorical, bernoulli, transit
 #-------------------
 # Gaussian BP rules
 #-------------------
@@ -69,9 +69,9 @@ bernoulli(x::Real, p::Nothing) = Beta(x+1,2-x)
 
 
 #-------------------
-# State transition nodes to calculate joint distributions
-# and messages towards process noise node (for LDS) or stochastic matrix (for HMM)
+# State transition nodes to calculate smoothing and joint distributions
 #-------------------
+
 # p(x_{t+1}|x_{t}) = N(x_{t+1}; A*x_{t},W^{-1})
 # m_f is filtered belief of x_{t}, m_s is smoothed belief of x_{t+1}
 # return m_s(x_t), p(x_{t+1},x_t|y_{1:T})
