@@ -33,6 +33,16 @@ baseE(p::InverseGamma) = 0
 # E[log(x)]
 logmean(p::InverseGamma) = log(scale(p)) - digamma(shape(p))
 
+#--------------------------
+# Beta distribution
+#--------------------------
+# Expectation of log base measure h(x)
+baseE(p::Beta) = 0
+# E[log(x)]
+logmean(p::Beta) = digamma(p.α) - digamma(p.α+p.β)
+# E[1-log(x)]
+logmeancomplement(p::Beta) = digamma(p.β) - digamma(p.α+p.β)
+
 
 #--------------------------
 # Dirichlet distribution
