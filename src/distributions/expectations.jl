@@ -95,3 +95,9 @@ end
 function logmean(p::SampleList)
     sum(p.weights .* log.(p.samples))
 end
+
+#--------------------------
+# Student's t distribution
+#--------------------------
+# E[x^2]
+squaremean(p::Student) = var(p) + mean(p)^2

@@ -56,6 +56,10 @@ function (\)(A::Vector, p::MvNormal)
     return Normal(m,V)
 end
 
+# BP rule on Gaussian node with Gamma prec, clamped mean or out
+normal(x::Nothing, μ::Real, τ::Gamma) = Student(μ, sqrt(mean(τ)), 2*shape(τ))
+normal(x::Real, μ::Nothing, τ::Gamma) = Student(x, sqrt(mean(τ)), 2*shape(τ))
+
 
 #-------------------
 # Conditioning to observations
