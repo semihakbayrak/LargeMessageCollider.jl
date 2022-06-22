@@ -4,6 +4,7 @@ export normal, mvnormal, transit, normalmix, categorical, gammadist
 #-------------------
 # normal is parameterized with mean and precision
 normal(x::Real, μ::Distribution, τ::Nothing) = convert(Gamma,[0.5,x*mean(μ) - squaremean(μ)/2 - x^2/2])
+normal(x::Distribution, μ::Real, τ::Nothing) = convert(Gamma,[0.5,μ*mean(x) - squaremean(x)/2 - μ^2/2])
 normal(x::Distribution, μ::Distribution, τ::Nothing) = convert(Gamma,[0.5,mean(x)*mean(μ) - squaremean(μ)/2 - squaremean(x)/2])
 normal(x::Real, μ::Nothing, τ::Distribution) = convert(Normal,[x*mean(τ),-mean(τ)/2])
 normal(x::Distribution, μ::Nothing, τ::Distribution) = convert(Normal,[mean(x)*mean(τ),-mean(τ)/2])

@@ -1,4 +1,4 @@
-export InferenceAlgorithm, BP, VMP, EP, TSL, EVMP, CVI
+export InferenceAlgorithm, BP, VMP, EP, TSL, EVMP, CVI, FEgradient
 # Inference algortihms include 
 # Implemented:
 # Belief Propagation (BP) 
@@ -9,9 +9,11 @@ export InferenceAlgorithm, BP, VMP, EP, TSL, EVMP, CVI
 # Extended Variational Message Passing (EVMP)
 # To be implemented:
 # Unscented Transform (UT)
+# Sigma Point Methods
 # Black Box Variational Inference (BBVI)
 # Reparameterization Gradient Message Passing (RGMP)
 # Stochastic Variational Inference (SVI)
+# Laplace Approximation
 # Sequential Monte Carlo (SMC)
 # Markov Chain Monte Carlo with Gibbs and Metropolis-Hastings (MCMC)
 # Expectation Maximization (EM)
@@ -29,6 +31,13 @@ struct EVMP <: VMP
 end
 
 mutable struct CVI <: InferenceAlgorithm
+    optimizer
+    num_iterations
+end
+
+# FEgradient algorithm enables us to use noisy free energy gradients calculated with RGMP and BBVI.
+# It is possible estimate gradients (as it is a collection of partial derivatives) by the combination of RGMP and BBVI.
+mutable struct FEgradient <: InferenceAlgorithm
     optimizer
     num_iterations
 end

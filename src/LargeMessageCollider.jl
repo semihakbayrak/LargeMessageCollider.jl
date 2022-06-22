@@ -32,6 +32,7 @@ include("inference/vmp.jl")
 include("inference/tsl.jl")
 include("inference/evmp.jl")
 include("inference/cvi.jl")
+include("inference/fegradient.jl")
 include("inference/ep.jl")
 
 end
