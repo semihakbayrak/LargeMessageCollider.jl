@@ -86,7 +86,7 @@ function convert(t::Type{F}, η::AbstractVector) where F<:MvNormal
     n = length(η)
     Δ = 1 + 4*n
     k = Int((-1 + sqrt(Δ))/2)
-    W = Matrix(Hermitian(-2*reshape(η[k+1:end],(k,k))))
+    W = Matrix(Hermitian(-2*reshape(η[k+1:end],(k,k)))) + 1e-8 * diagm(ones(k))
     V = Matrix(Hermitian(inv(W)))
     m = W\η[1:k]
     MvNormal(m,V)

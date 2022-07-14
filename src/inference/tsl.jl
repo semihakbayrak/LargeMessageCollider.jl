@@ -42,7 +42,7 @@ function approximateMarginal!(algo::F, f::Function, out::Normal, in::MvNormal) w
     s = h*P*h' + r
     k = P*h'./s
     m = mean(in) + k*v
-    V = P - s*k*k'
+    V = Matrix(Hermitian(P - s*k*k'))
     q = MvNormal(m,V)
     return q
 end
@@ -66,7 +66,7 @@ function approximateMarginal!(algo::F, f::Function, out::MvNormal, in::MvNormal)
     S = Matrix(Hermitian(H*P*H' + R)+diagm(0=>1e-10*ones(length(mean(out)))))
     K = P*H'*inv(S)
     m = mean(in) + K*v
-    V = P - K*S*K'
+    V = Matrix(Hermitian(P - K*S*K'))
     q = MvNormal(m,V)
     return q
 end

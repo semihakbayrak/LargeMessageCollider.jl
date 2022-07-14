@@ -56,6 +56,71 @@ function (\)(A::Vector, p::MvNormal)
     return Normal(m,V)
 end
 
+function (+)(p::Canonical, q::MvNormal)
+    if p.dist != MvNormal
+        error("Canonical distribution does not belong to MvNormal")
+    else
+        m_q = mean(q)
+        V_q = cov(q)
+        W_q = inv(V_q)
+        ξ_q = W_q*m_q
+        d = length(m_q)
+
+        ξ_p = p.η[1:d]
+        W_p = -2 * reshape(p.η[d+1:end],(d,d)) # Highly probable that p is improper dist so no Matrix(Hermitian())
+        
+        S = inv(W_p+W_q)
+        W = Matrix(Hermitian(W_p*S*W_q))
+        ξ = W_p*S*ξ_q + W_q*S*ξ_p
+        η = [ξ;vec(-0.5*W)]
+        return Canonical(MvNormal, η)
+    end
+end
+
+(+)(p::MvNormal, q::Canonical) = q + p
+
+function (-)(p::Canonical, q::MvNormal)
+    if p.dist != MvNormal
+        error("Canonical distribution does not belong to MvNormal")
+    else
+        m_q = mean(q)
+        V_q = cov(q)
+        W_q = inv(V_q)
+        ξ_q = W_q*m_q
+        d = length(m_q)
+
+        ξ_p = p.η[1:d]
+        W_p = -2 * reshape(p.η[d+1:end],(d,d)) # Highly probable that p is improper dist so no Matrix(Hermitian())
+        
+        S = inv(W_p+W_q)
+        W = Matrix(Hermitian(W_p*S*W_q))
+        ξ = W_q*S*ξ_p - W_p*S*ξ_q
+        η = [ξ;vec(-0.5*W)]
+        return Canonical(MvNormal, η)
+    end
+end
+
+function (-)(q::MvNormal, p::Canonical)
+    if p.dist != MvNormal
+        error("Canonical distribution does not belong to MvNormal")
+    else
+        m_q = mean(q)
+        V_q = cov(q)
+        W_q = inv(V_q)
+        ξ_q = W_q*m_q
+        d = length(m_q)
+
+        ξ_p = p.η[1:d]
+        W_p = -2 * reshape(p.η[d+1:end],(d,d)) # Highly probable that p is improper dist so no Matrix(Hermitian())
+        
+        S = inv(W_p+W_q)
+        W = Matrix(Hermitian(W_p*S*W_q))
+        ξ = W_p*S*ξ_q - W_q*S*ξ_p
+        η = [ξ;vec(-0.5*W)]
+        return Canonical(MvNormal, η)
+    end
+end
+
 # BP rule on Gaussian node with Gamma prec, clamped mean or out
 normal(x::Nothing, μ::Real, τ::Gamma) = Student(μ, sqrt(mean(τ)), 2*shape(τ))
 normal(x::Real, μ::Nothing, τ::Gamma) = Student(x, sqrt(mean(τ)), 2*shape(τ))
