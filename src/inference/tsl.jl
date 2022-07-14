@@ -6,9 +6,9 @@ function forwardMessage(algo::F, f::Function, in::Normal) where F<:TSL
     m = f(mean(in))
     h = ForwardDiff.derivative(f,mean(in))
     if length(m) == 1
-        return Normal(m, sqrt(h^2*var(in)))
+        return Normal(m, sqrt(h^2*var(in))), h
     else
-        return MvNormal(m, Matrix(Hermitian(var(in)*h*h'+diagm(0=>1e-10*ones(length(m))))))
+        return MvNormal(m, Matrix(Hermitian(var(in)*h*h'+diagm(0=>1e-10*ones(length(m)))))), h
     end
 end
 
@@ -16,10 +16,10 @@ function forwardMessage(algo::F, f::Function, in::MvNormal) where F<:TSL
     m = f(mean(in))
     if length(m) == 1
         h = transpose(ForwardDiff.gradient(f,mean(in)))
-        return Normal(m,sqrt(h*cov(in)*h'))
+        return Normal(m,sqrt(h*cov(in)*h')), h
     else
         h = ForwardDiff.jacobian(f,mean(in))
-        return MvNormal(m, Matrix(Hermitian(h*cov(in)*h'+diagm(0=>1e-10*ones(length(m))))))
+        return MvNormal(m, Matrix(Hermitian(h*cov(in)*h'+diagm(0=>1e-10*ones(length(m)))))), h
     end
 end
 
