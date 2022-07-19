@@ -1,4 +1,4 @@
-export InferenceAlgorithm, BP, VMP, EP, TSL, EVMP, CVI, FEgradient
+export InferenceAlgorithm, BP, VMP, EP, TSL, UT, EVMP, CVI, FEgradient
 # Inference algortihms include 
 # Implemented:
 # Belief Propagation (BP) 
@@ -25,6 +25,8 @@ abstract type VMP <: InferenceAlgorithm end
 abstract type EP <: InferenceAlgorithm end
 
 struct TSL <: InferenceAlgorithm end
+
+struct UT <: InferenceAlgorithm end
 
 struct EVMP <: VMP
     num_samples
