@@ -138,24 +138,30 @@ end
 # p(x_{t+1}|x_{t}) = N(x_{t+1}; f(x_{t}),W^{-1})
 # m_f is filtered belief of x_{t}, m_s is smoothed belief of x_{t+1}
 # return m_s(x_t), p(x_{t+1},x_t|y_{1:T})
-# function transit(m_f::Normal, m_s::Normal, func::Function, a::Real, w::Real)
-#     f, F = mean(m_f), var(m_f) # f_t, F_t
-#     k, K = mean(m_s), var(m_s) # k_{t+1}, K_{t+1}
-#     P1, P21 = F, a*F
-#     P12, P2 = P21, a*P21 + 1/w
-#     P2_inv = 1/P2
-#     k_t = f - P12*P2_inv*(func(f) - k)
-#     Pa = P12*P2_inv
-#     K_ = Pa*K
-#     K_t = K_*Pa + (P1 - Pa*P21)
-#     m = [k;k_t]
-#     V = zeros(2,2)
-#     V[1,1] = K
-#     V[1,2] = K_
-#     V[2,1] = K_
-#     V[2,2] = K_t
-#     return Normal(k_t, sqrt(K_t)), MvNormal(m,Matrix(Hermitian(V)))
-# end
+function transit(m_f::Normal, m_s::Normal, func::Function, w::Real; α=0.001, β=2, κ=0)
+    p_func, sigma, func_sigma = forwardMessageUT(m_f, func, α, β, κ)
+    f, F = mean(m_f), var(m_f) # f_t, F_t
+    k, K = mean(m_s), var(m_s) # k_{t+1}, K_{t+1}
+    d = 1
+    λ = utHyperparams(α, β, κ, d)
+    Wᵐ, Wᶜ = utWeights(d, λ, α, β)
+    P1 = F
+    P21 = Wᶜ[1]*(sigma[1]-f)*(func_sigma[1]-mean(p_func)) + Wᶜ[2]*(sigma[2]-f)*(func_sigma[2]-mean(p_func)) + Wᶜ[3]*(sigma[3]-f)*(func_sigma[3]-mean(p_func))
+    P12 = P21
+    P2 = var(p_func) + 1/w
+    P2_inv = 1/P2
+    k_t = f - P12*P2_inv*(mean(p_func) - k)
+    Pa = P12*P2_inv
+    K_ = Pa*K
+    K_t = K_*Pa + (P1 - Pa*P21)
+    m = [k;k_t]
+    V = zeros(2,2)
+    V[1,1] = K
+    V[1,2] = K_
+    V[2,1] = K_
+    V[2,2] = K_t
+    return Normal(k_t, sqrt(K_t)), MvNormal(m,Matrix(Hermitian(V)))
+end
 
 
 function transit(m_f::MvNormal, m_s::MvNormal, func::Function, W::Matrix; α=0.001, β=2, κ=0)
