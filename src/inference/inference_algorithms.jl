@@ -5,10 +5,10 @@ export InferenceAlgorithm, BP, VMP, EP, TSL, UT, EVMP, CVI, FEgradient
 # Variational Message Passing (VMP) 
 # Expectation Propagation (EP) 
 # Taylor Series Linearization (TSL)
+# Unscented Transform (UT)
 # Conjugate-computation Variational Inference (CVI)
 # Extended Variational Message Passing (EVMP)
 # To be implemented:
-# Unscented Transform (UT)
 # Sigma Point Methods
 # Black Box Variational Inference (BBVI)
 # Reparameterization Gradient Message Passing (RGMP)
@@ -16,6 +16,7 @@ export InferenceAlgorithm, BP, VMP, EP, TSL, UT, EVMP, CVI, FEgradient
 # Laplace Approximation
 # Sequential Monte Carlo (SMC)
 # Markov Chain Monte Carlo with Gibbs and Metropolis-Hastings (MCMC)
+# Stochastic Gradient Langevin Dynamics (SGLD)
 # Expectation Maximization (EM)
 
 abstract type InferenceAlgorithm end
