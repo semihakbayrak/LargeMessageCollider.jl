@@ -6,12 +6,11 @@ export InferenceAlgorithm, BP, VMP, EP, TSL, UT, EVMP, CVI, FEgradient
 # Expectation Propagation (EP) 
 # Taylor Series Linearization (TSL)
 # Unscented Transform (UT)
-# Conjugate-computation Variational Inference (CVI)
+# Conjugate-computation Variational Inference (CVI) partially
 # Extended Variational Message Passing (EVMP)
+# Black Box Variational Inference (BBVI) partially
+# Reparameterization Gradient Message Passing (RGMP) partially
 # To be implemented:
-# Sigma Point Methods
-# Black Box Variational Inference (BBVI)
-# Reparameterization Gradient Message Passing (RGMP)
 # Stochastic Variational Inference (SVI)
 # Laplace Approximation
 # Sequential Monte Carlo (SMC)
