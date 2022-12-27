@@ -4,6 +4,7 @@ export ep!
 # approximate inference algorithm to find an approximate marginal at the input edge. If the marginal is a set of 
 # weighted samples, the EP engine further applies moment matching to generate a compact marginal distribution. Once marginal
 # is acquired, EP divides the marginal to the incoming input message to find an outgoing message towards input edge.
+
 function ep!(algo::F1, f::Union{Nothing,Function}, out::T1, in::T2) where {F1<:Union{TSL,EVMP,CVI}, T1<:Distribution, T2<:Distribution}
     q = approximateMarginal!(algo,f,out,in)
     if isa(q,SampleList)
