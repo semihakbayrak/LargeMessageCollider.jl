@@ -8,7 +8,7 @@ invdigamma(x) = 1/log(1+exp(-x))
 
 function matrix_posdef_numeric_stable(X)
     d = size(X)[1]
-    ϵ = 1e-10
+    ϵ = 1e-15
     X_new = Matrix(Hermitian(X + diagm(0=>ϵ*ones(d))))
     while isposdef(X_new) == false
         ϵ = 10*ϵ

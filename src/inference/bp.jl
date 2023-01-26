@@ -6,8 +6,8 @@ export poisson, normal, mvnormal, categorical, bernoulli, transit
 (*)(a::Real, p::Normal) = Normal(a*mean(p),sqrt(a^2*var(p)))
 (*)(p::Normal, a::Int) = Normal(a*mean(p),sqrt(a^2*var(p)))
 (*)(a::Int, p::Normal) = Normal(a*mean(p),sqrt(a^2*var(p)))
-(*)(A::Matrix, p::MvNormal) = if size(A)[1] != 1 MvNormal(A*mean(p),Matrix(Hermitian(A*cov(p)*A'))) else Normal((A*mean(p))[1],sqrt((A*cov(p)*A')[1])) end
-(*)(A::Vector, p::Normal) = MvNormal(A*mean(p),Matrix(Hermitian(A*var(p)*A'+ 1e-15*diagm(0=>ones(length(A))))))
+(*)(A::Matrix, p::MvNormal) = if size(A)[1] != 1 MvNormal(A*mean(p),matrix_posdef_numeric_stable(A*cov(p)*A')) else Normal((A*mean(p))[1],sqrt((A*cov(p)*A')[1])) end
+(*)(A::Vector, p::Normal) = MvNormal(A*mean(p),matrix_posdef_numeric_stable(A*var(p)*A'))
 (+)(p::Normal, q::Normal) = Normal(mean(p)+mean(q),sqrt(var(p)+var(q)))
 (+)(p::Normal, a::Real) = Normal(mean(p)+a,sqrt(var(p)))
 (+)(p::Normal, a::Int) = Normal(mean(p)+a,sqrt(var(p)))
@@ -181,5 +181,5 @@ function transit(m_f::MvNormal, m_s::MvNormal, A::Matrix, W::Matrix)
     V[1:length(f), length(f)+1:2*length(f)] = K_'
     V[length(f)+1:2*length(f), 1:length(f)] = K_
     V[length(f)+1:2*length(f), length(f)+1:2*length(f)] = K_t
-    return MvNormal(k_t, Matrix(Hermitian(K_t))), MvNormal(m,Matrix(Hermitian(V)))
+    return MvNormal(k_t, matrix_posdef_numeric_stable(K_t)), MvNormal(m,matrix_posdef_numeric_stable(V))
 end
