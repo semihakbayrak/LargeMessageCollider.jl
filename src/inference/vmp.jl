@@ -42,12 +42,24 @@ gammadist(x::Real, α::Distribution, θ::Nothing) = Canonical(InverseGamma,[-mea
 # Structured VMP that find the forward message at the end of the transit node
 transit(m_f::Normal, a::Real, w::Gamma) = a*m_f + Normal(0,sqrt(1/mean(w)))
 transit(m_f::MvNormal, A::Matrix, W::Wishart) = A*m_f + MvNormal(zeros(size(A)[1]),Matrix(Hermitian(inv(mean(W)))))
+# Below function is useful for reduced form explained further below
+function transit(m_f::MvNormal, A::Matrix, w::Gamma) 
+    V = diagm(0=>1e-15*ones(size(A)[1]))
+    V[1,1] = 1/mean(w)
+    A*m_f + MvNormal(zeros(size(A)[1]),matrix_posdef_numeric_stable(V))
+end
 
 # p(x_{t+1}|x_{t}) = N(x_{t+1}; A*x_{t},W^{-1})
 # m_f is filtered belief of x_{t}, m_s is smoothed belief of x_{t+1}
 # Structured VMP that returns m_s(x_t), q(x_{t+1},x_t|y_{1:T})
 transit(m_f::Normal, m_s::Normal, a::Real, w::Gamma) = transit(m_f, m_s, a, mean(w))
 transit(m_f::MvNormal, m_s::MvNormal, A::Matrix, W::Wishart) = transit(m_f, m_s, A, mean(W))
+# Below function is useful for reduced form explained further below
+function transit(m_f::MvNormal, m_s::MvNormal, A::Matrix, w::Gamma) 
+    mean_W = diagm(0=>1e15*ones(size(A)[1]))
+    mean_W[1,1] = mean(w)
+    transit(m_f, m_s, A, matrix_posdef_numeric_stable(mean_W))
+end
 
 # Structured VMP message towards process noise precision
 function transit(q1::Normal, q2::Normal, q21::MvNormal, a::Real, w::Nothing)
@@ -57,11 +69,20 @@ function transit(q1::Normal, q2::Normal, q21::MvNormal, a::Real, w::Nothing)
     return Gamma(α,θ,check_args=false)
 end
 
-function transit(q1::MvNormal, q2::MvNormal, q21::MvNormal, A::Matrix, W::Nothing)
+function transit(q1::MvNormal, q2::MvNormal, q21::MvNormal, A::Matrix, W::Nothing; reduced::Bool=false)
     k = length(mean(q1))
     V_inv = squaremean(q2) - (squaremean(q21)[1:k,k+1:2*k])*A' - A*(squaremean(q21)[k+1:2*k,1:k]) + A*squaremean(q1)*A'
     η = [vec(-0.5*V_inv); 0.5]
-    return Canonical(Wishart,η)
+    if reduced
+        # in reduced form, noise is injected only on the first state during state transition 
+        # this is especially useful when the states are coppied from one state to the other
+        α = 1.5
+        β = 0.5*V_inv[1,1]
+        θ = 1/β
+        return Gamma(α,θ,check_args=false)
+    else
+        return Canonical(Wishart,η)
+    end
 end
 
 #-------------------
