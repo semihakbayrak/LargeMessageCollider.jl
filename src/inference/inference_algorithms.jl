@@ -22,14 +22,15 @@ export InferenceAlgorithm, BP, VMP, EP, TSL, UT, EVMP, CVI, FEgradient
 abstract type InferenceAlgorithm end
 
 abstract type BP <: InferenceAlgorithm end
-abstract type VMP <: InferenceAlgorithm end
+#abstract type VMP <: InferenceAlgorithm end
+struct VMP <: InferenceAlgorithm end
 abstract type EP <: InferenceAlgorithm end
 
 struct TSL <: InferenceAlgorithm end
 
 struct UT <: InferenceAlgorithm end
 
-struct EVMP <: VMP
+struct EVMP <: InferenceAlgorithm
     num_samples
 end
 

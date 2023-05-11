@@ -138,7 +138,7 @@ end
 # p(x_{t+1}|x_{t}) = N(x_{t+1}; f(x_{t}),W^{-1})
 # m_f is filtered belief of x_{t}, m_s is smoothed belief of x_{t+1}
 # return m_s(x_t), p(x_{t+1},x_t|y_{1:T})
-function transit(m_f::Normal, m_s::Normal, func::Function, w::Real; α=0.001, β=2, κ=0)
+function transit(algo::UT, m_f::Normal, m_s::Normal, func::Function, w::Real; α=0.001, β=2, κ=0)
     p_func, sigma, func_sigma = forwardMessageUT(m_f, func, α, β, κ)
     f, F = mean(m_f), var(m_f) # f_t, F_t
     k, K = mean(m_s), var(m_s) # k_{t+1}, K_{t+1}
@@ -164,7 +164,7 @@ function transit(m_f::Normal, m_s::Normal, func::Function, w::Real; α=0.001, β
 end
 
 
-function transit(m_f::MvNormal, m_s::MvNormal, func::Function, W::Matrix; α=0.001, β=2, κ=0)
+function transit(algo::UT, m_f::MvNormal, m_s::MvNormal, func::Function, W::Matrix; α=0.001, β=2, κ=0)
     p_func, sigma, func_sigma = forwardMessageUT(m_f, func, α, β, κ)
     f, F = mean(m_f), cov(m_f) # f_t, F_t
     k, K = mean(m_s), cov(m_s) # k_{t+1}, K_{t+1}
