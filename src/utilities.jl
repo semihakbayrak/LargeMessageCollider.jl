@@ -19,3 +19,12 @@ function matrix_posdef_numeric_stable(X)
     end
     return X_new
 end
+
+# Adapted from https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/
+function logsumexp(x::Array)
+    c = maximum(x)
+    return c + log(sum(exp.(x .- c)))
+end
+
+normalize_prob_array(p::Array) = p./sum(p)
+normalize_logprob_array(logp::Array) = exp.(logp.-logsumexp(logp)) # return normalized p

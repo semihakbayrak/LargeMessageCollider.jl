@@ -125,6 +125,9 @@ end
 normal(x::Nothing, μ::Real, τ::Gamma) = Student(μ, sqrt(mean(τ)), 2*shape(τ))
 normal(x::Real, μ::Nothing, τ::Gamma) = Student(x, sqrt(mean(τ)), 2*shape(τ))
 
+# BP rules related to discrete variables
+(*)(A::Matrix, p::Categorical) = Categorical(normalize_prob_array(A*p.p))
+(\)(A::Matrix, p::Categorical) = Categorical(normalize_prob_array(A'*p.p))
 
 #-------------------
 # Conditioning to observations
@@ -182,4 +185,19 @@ function transit(m_f::MvNormal, m_s::MvNormal, A::Matrix, W::Matrix)
     V[length(f)+1:2*length(f), 1:length(f)] = K_
     V[length(f)+1:2*length(f), length(f)+1:2*length(f)] = K_t
     return MvNormal(k_t, matrix_posdef_numeric_stable(K_t)), MvNormal(m,matrix_posdef_numeric_stable(V))
+end
+
+# p(z_{t+1}|z_{t}) = Cat(z_{t+1}; A*z_{t})
+# m_f is filtered belief of z_{t}, m_s is smoothed belief of z_{t+1}
+# return m_s(z_t), p(z_{t+1},z_t|y_{1:T})
+function transit(m_f::Categorical, m_s::Categorical, A::Matrix)
+    α_t, γ_tnext = m_f.p, m_s.p
+    α_tnext_t = A*α_t
+    K = length(α_t)
+    logS = log.(A) + log.((α_t*ones(1,K))')
+    logM = logS - log.(α_tnext_t*ones(1,K))
+    logJ = logM + log.(γ_tnext*ones(1,K))
+    J = normalize_logprob_array(logJ)
+    M = exp.(logM)
+    return Categorical(normalize_prob_array(M'*γ_tnext)), J
 end

@@ -303,7 +303,7 @@ function convert(::Type{F}, p::Categorical) where F<:Canonical
     p_vec = p.p ./ sum(p.p) # make sure that mean parameters add up to 1
     h(x::Array) = 1
     T(x::Array) = x .== ones(length(p_vec))
-    η = [log.(p_vec[1:end-1]./p_vec[end]);0]
+    η = [log.(p_vec[1:end-1]./(p_vec[end]+1e-10));0] #1e-10 to avoid division with 0 in case p_vec[end] is 0
     A_eval = -log(p_vec[end])
     A(η::Array) = log(sum(exp.(η)))
 
