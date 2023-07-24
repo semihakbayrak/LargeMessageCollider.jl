@@ -28,3 +28,10 @@ end
 
 normalize_prob_array(p::Array) = p./sum(p)
 normalize_logprob_array(logp::Array) = exp.(logp.-logsumexp(logp)) # return normalized p
+
+# MatrixDirichlet to Vector of Dirichlet dists
+function matrix2list_dirichlet(p::MatrixDirichlet)
+    α_list = [p.alpha[:,i] for i in 1:size(p.alpha,2)] # N-elements of vector comprising K-elements of vectors
+    p_list = Dirichlet.(α_list) # N-elements vector of Dirichlet dists
+    return p_list
+end

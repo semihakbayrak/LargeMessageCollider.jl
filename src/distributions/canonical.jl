@@ -296,6 +296,28 @@ end
 # No analytical inverse link function for Dirichlet
 
 #--------------------------
+# MatrixDirichlet distribution
+#--------------------------
+function convert(::Type{F}, p::MatrixDirichlet) where F<:Canonical
+    h(x::Matrix) = 1
+    T(x::Matrix) = log.(vec(x))
+    η = vec(p.alpha) .- 1
+    A_eval = sum(loggamma.(vec(p.alpha))) - loggamma(sum(vec(p.alpha)))
+    A(η::Array) = sum(loggamma.(η .+ 1)) - loggamma(sum(η .+ 1))
+
+    h_func = (x)->h(x)
+    T_func = (x)->T(x)
+    A_func = (η)->A(η)
+
+    return Canonical(Dirichlet, h_func, T_func, η, A_eval, A_func)
+end
+
+function convert(t::Type{F}, η::AbstractVector, s::Tuple{Int,Int}) where F<:MatrixDirichlet
+    α = reshape(η .+ 1, s)
+    MatrixDirichlet(α)
+end
+
+#--------------------------
 # Categorical distribution
 #--------------------------
 # We use variant 3 in https://en.wikipedia.org/wiki/Exponential_family
