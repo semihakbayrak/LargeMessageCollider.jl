@@ -20,11 +20,11 @@ import Distributions.logpdf
 import Distributions.pdf
 
 include("utilities.jl")
+include("distributions/matrix_dirichlet.jl")
 include("info_measure.jl")
 include("distributions/canonical.jl")
 include("distributions/sample_list.jl")
 include("distributions/student.jl")
-include("distributions/matrix_dirichlet.jl")
 include("distributions/expectations.jl")
 include("inference/inference_algorithms.jl")
 include("inference/inference_rules.jl")

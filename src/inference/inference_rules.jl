@@ -11,7 +11,7 @@ function collide(p::F...) where F<:Distribution
         q = convert(Canonical,dist)
         η .+= q.η
     end
-    if F<:Categorical return convert(Categorical,η) elseif F<:MatrixDirichlet return convert(F,η,size(p[1])) else return convert(F,η) end # * Check below
+    if F<:Categorical return convert(Categorical,η) else return convert(F,η) end # * Check below
 end
 # *: Categorical is encoded as DiscreteNonParametric in Distributions.jl, which has a different convert method and causes problems
 # That is why convert(Categorical,η) is handled as a special case.
@@ -24,6 +24,14 @@ function collide(p::MvNormal, q::MvNormal)
     qc = convert(Canonical,q)
     η = pc.η .+ qc.η
     return convert(MvNormal,η)
+end
+
+function collide(p::MatrixDirichlet, q::MatrixDirichlet)
+    p_list = matrix2list_dirichlet(p)
+    q_list = matrix2list_dirichlet(q)
+    dir_list = collide.(p_list,q_list)
+    α_list = [dist.alpha for dist in dir_list]
+    MatrixDirichlet(hcat(α_list...))
 end
 
 function collide(p::F, q::C; canonical=false) where F<:Distribution where C<:Canonical

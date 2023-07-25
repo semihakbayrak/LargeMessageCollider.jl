@@ -1,4 +1,4 @@
-export normal, mvnormal, transit, normalmix, categorical, gammadist
+export normal, mvnormal, transit, emit, normalmix, categorical, gammadist
 #-------------------
 # VMP rules (mean-field assumption) for standard distributions
 #-------------------
@@ -84,6 +84,30 @@ function transit(algo::VMP, q1::MvNormal, q2::MvNormal, q21::MvNormal, A::Matrix
         return Canonical(Wishart,η)
     end
 end
+
+# Structured VMP that find the forward message at the end of the transit node for discrete variables
+function transit(algo::VMP, m_f::Categorical, A::MatrixDirichlet) 
+    A_use = normalize_logprob_matrix(logmean(A))
+    A_use*m_f
+end
+
+# p(z_{t+1}|z_{t},A) = Cat(z_{t+1}; A*z_{t})
+# m_f is filtered belief of z_{t}, m_s is smoothed belief of z_{t+1}
+# Structured VMP that returns m_s(z_t), q(z_{t+1},z_t|y_{1:T})
+transit(algo::VMP, m_f::Categorical, m_s::Categorical, A::MatrixDirichlet) = transit(m_f, m_s, normalize_logprob_matrix(logmean(A)))
+
+# Structured VMP message towards transition matrix of discrete states
+transit(algo::VMP, q21::Matrix, A::Nothing) = MatrixDirichlet(q21 .+ 1)
+
+#-------------------
+# Emmission nodes useful for HMMs and SSSMs. p(x[t]|z[t],B)
+#-------------------
+
+# Backward VMP message towards hidden discrete state
+emit(algo::VMP, q_x::Categorical, m_z::Nothing, B::MatrixDirichlet) = normalize_logprob_matrix(logmean(B))\q_x
+
+# VMP message towards emission matrix
+emit(algo::VMP, q_x::Categorical, q_z::Categorical, B::Nothing) = MatrixDirichlet(q_x.p * q_z.p' .+ 1)
 
 #-------------------
 # Gaussian Mixture Model likelihood related variational messages for mean-field assumption

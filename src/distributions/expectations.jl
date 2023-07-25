@@ -53,6 +53,19 @@ baseE(p::Dirichlet) = 0
 logmean(p::Dirichlet) = digamma.(p.alpha) .- digamma(sum(p.alpha))
 
 #--------------------------
+# MatrixDirichlet distribution
+#--------------------------
+# Expectation of log base measure h(x)
+baseE(p::MatrixDirichlet) = 0
+# E[log(x)]
+function logmean(p::MatrixDirichlet) 
+    p_list = matrix2list_dirichlet(p) # N-elements vector of Dirichlet dists
+    #digamma.(p.alpha) .- digamma(sum(p.alpha, dims=1))  # digamma does not operate on matrix, so erronious 
+    logmean_list = map(x -> logmean(x), p_list) # Perform logmean on each Dirichlet element
+    return hcat(logmean_list...) # Concatenation along dim 2 to create K by N matrix
+end
+
+#--------------------------
 # Categorical distribution
 #--------------------------
 baseE(p::Categorical) = 0

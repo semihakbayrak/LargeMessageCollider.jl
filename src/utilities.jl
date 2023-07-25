@@ -28,10 +28,10 @@ end
 
 normalize_prob_array(p::Array) = p./sum(p)
 normalize_logprob_array(logp::Array) = exp.(logp.-logsumexp(logp)) # return normalized p
-
-# MatrixDirichlet to Vector of Dirichlet dists
-function matrix2list_dirichlet(p::MatrixDirichlet)
-    α_list = [p.alpha[:,i] for i in 1:size(p.alpha,2)] # N-elements of vector comprising K-elements of vectors
-    p_list = Dirichlet.(α_list) # N-elements vector of Dirichlet dists
-    return p_list
+# Below function ensures columns sum up to one
+function normalize_logprob_matrix(logp::Matrix)
+    # K by N logp
+    logp_list = [logp[:,i] for i in axes(logp,2)] # N-elements of vector comprising K-elements of vectors
+    normalized_p_list = map(x -> normalize_logprob_array(x), logp_list) # Perform normalization for each vector elements
+    return hcat(normalized_p_list...) # Concatenation along dim 2 to create K by N matrix
 end

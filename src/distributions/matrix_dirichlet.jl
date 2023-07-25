@@ -1,4 +1,4 @@
-export MatrixDirichlet
+export MatrixDirichlet, matrix2list_dirichlet
 
 # p(X) = ∏_{n=1:N} p(x_n), where p(x_i) = Dir(α_i), dim(α_i) = K
 # X is K by N matrix.
@@ -47,4 +47,13 @@ end
 
 function Distributions.size(p::MatrixDirichlet)
     return size(p.alpha)
+end
+
+#Utils functions
+
+# MatrixDirichlet to Vector of Dirichlet dists
+function matrix2list_dirichlet(p::MatrixDirichlet)
+    α_list = [p.alpha[:,i] for i in 1:size(p.alpha,2)] # N-elements of vector comprising K-elements of vectors
+    p_list = Dirichlet.(α_list) # N-elements vector of Dirichlet dists
+    return p_list
 end

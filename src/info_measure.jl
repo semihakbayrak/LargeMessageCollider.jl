@@ -1,4 +1,4 @@
-export bregman_div, kl_div, cross_entropy, differential_entropy, normal_conditional_entropy
+export bregman_div, kl_div, cross_entropy, differential_entropy, normal_conditional_entropy, categorical_conditional_entropy
 
 function bregman_div(x::Number, y::Number, f::Function)
     d_f = f'(y)
@@ -20,6 +20,7 @@ end
 # https://en.wikipedia.org/wiki/Cross_entropy
 # -E_q(x)[logp(x)]
 cross_entropy(q::F, p::F) where {F<:Distribution} = entropy(q) + kl_div(q,p)
+cross_entropy(q::MatrixDirichlet, p::MatrixDirichlet) = sum(cross_entropy.(matrix2list_dirichlet(q),matrix2list_dirichlet(p)))
 
 # https://en.wikipedia.org/wiki/Conditional_entropy
 # -∫q(x_{t},x_{t-1})*logq(x_{t}|x_{t-1}) dx_{t} dx_{t-1}
@@ -37,6 +38,14 @@ function normal_conditional_entropy(q1::MvNormal, q2::MvNormal, q21::MvNormal)
     res2 = tr(invN*squaremean(q2)) - tr(invN*(μ_2*μ_2' + Σ_21*M')) - tr(invN*(μ_2*μ_2' + M*Σ_12))
     res2 += tr(invN*(μ_2*μ_2' + M*Σ_11*M'))
     return res + res2/2
+end
+
+# -∑_{z[t],z[t-1]} q(z[t],z[t-1])*logq(z[t]|z[t-1])
+function categorical_conditional_entropy(q21::Matrix)
+    K = size(q21)[1]
+    γ_transpose = sum(q21, dims=1)
+    logq_cond = log.(q21) - log.(ones(K)*γ_transpose)
+    return -sum(q21.*logq_cond)
 end
 
 #----------------------------------------------
@@ -106,3 +115,9 @@ function transit(q1::MvNormal, q2::MvNormal, q21::MvNormal, A::Matrix, qW::Wisha
     V_inv = squaremean(q2) - (squaremean(q21)[1:k,k+1:2*k])*A' - A*(squaremean(q21)[k+1:2*k,1:k]) + A*squaremean(q1)*A'
     return k/2*log(2*pi) - logdetmean(qW)/2 + tr(V_inv*mean(qW))/2
 end
+
+# -∫q(A)∑_{z[t]}∑_{z[t-1]}q(z_{t},z_{t-1})*logp(z_{t}|z_{t-1},A) dA
+transit(q21::Matrix, qA::MatrixDirichlet) = -sum(q21 .* logmean(qA))
+
+# -∫q(B)∑_{y[t]}∑_{z[t]}q(y_{t})q(z_{t})*logp(y_{t}|z_{t},B) dB
+emit(q_x::Categorical, q_z::Categorical, qB::MatrixDirichlet) = -sum((q_x.p * q_z.p') .* logmean(qB))
