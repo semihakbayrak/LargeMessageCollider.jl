@@ -1,4 +1,4 @@
-export inner_product, invdigamma, matrix_posdef_numeric_stable
+export inner_product, invdigamma, matrix_posdef_numeric_stable, normalize_logprob_array
 
 inner_product(a::Vector, b::Vector) = a'*b
 inner_product(A::Array, B::Array) = tr(B*A)
